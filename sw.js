@@ -1,5 +1,5 @@
-const CACHE='trip-pocket-v7';
-const ASSETS=['./','./index.html','./trip.js','./packing.js','./reimbursement.js','./editor.js','./expenses.js','./theme.css?v=2.0.2','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE='trip-pocket-v8';
+const ASSETS=['./','./index.html','./trip.js?v=2.0.3','./packing.js','./reimbursement.js','./editor.js','./expenses.js','./theme.css?v=2.0.2','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('trip-pocket-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||!ASSETS.some(p=>u.pathname===new URL(p,self.registration.scope).pathname))return;e.respondWith((async()=>{const c=await caches.open(CACHE);try{const r=await fetch(e.request,{cache: 'no-cache'});if(r.ok)await c.put(u.pathname,r.clone());return r}catch{return await c.match(u.pathname,{ignoreSearch:true})||new Response('離線資源尚未準備完成，請連線後重新開啟。',{status:503})}})())});

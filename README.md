@@ -6,7 +6,7 @@
 
 1. 用 Safari 開啟 App，分享 → 加入主畫面。
 2. 從主畫面開啟後，點「匯入私人行程」，選擇存在自己「檔案」中的 JSON。
-3. 使用行程、班機、住宿、行李、提醒、備忘。
+3. 底部提供行程、行李、報帳、備忘、更多；班機、住宿和助理提醒也可從行程頁直接開啟。
 4. 「備忘 → 匯出備份」保留私人行程、筆記、提醒與打包狀態。
 5. 出門前切飛航模式，確認 App 可開啟。原始 Google Drive 文件與地圖仍需網路。
 
@@ -24,6 +24,8 @@ Safari 與主畫面 App 的資料可能分開，請固定從主畫面使用。�
 
 雙擊 run.bat，或執行 `python -m http.server 8765 --bind 127.0.0.1`。
 
-只發布白名單：index.html、trip.js、packing.js、sw.js、manifest.webmanifest、三張 PNG 圖示、icon.svg、README.md、FEATURES.md、.gitignore、.nojekyll。private/、備份、PDF、測試紀錄和設計檔不得發布。
+只發布白名單：index.html、trip.js、packing.js、reimbursement.js、sw.js、manifest.webmanifest、三張 PNG 圖示、icon.svg、README.md、FEATURES.md、.gitignore、.nojekyll。private/、備份、PDF、測試紀錄和設計檔不得發布。
 
 公開網址不是有登入保護的私人網站；私人資訊僅於使用者匯入後出現在該裝置。資料內容不會隨 App 更新自動改動。
+
+報帳頁支援私人公司資料複製、依類別展開規則及資料夾分類提示。需重新匯入含 reimbursement 的私人行程 JSON；保留原有備忘與清單。

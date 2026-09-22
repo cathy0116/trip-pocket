@@ -1,0 +1,21 @@
+const TRIP_KEY='trip-pocket-private-v1';
+function validateTrip(t){
+ const str=(v,max=10000)=>typeof v==='string'&&v.length<=max;
+ if(!t||t.schema!==1||!['title','owner','period','route','readDate','sheetDate','ticketDate','hotelDate'].every(k=>str(t[k],200)))throw Error('Invalid trip');
+ if(!Array.isArray(t.days)||!t.days.length||t.days.length>60||t.days.some(d=>!Array.isArray(d)||d.length!==4||!d.slice(0,3).every(x=>str(x,200))||!Array.isArray(d[3])||d[3].length>100||d[3].some(e=>!Array.isArray(e)||e.length!==3||!e.every(x=>str(x)))))throw Error('Invalid days');
+ if(!str(t.timezoneNotice)||!Array.isArray(t.timezones)||t.timezones.length!==t.days.length||!t.timezones.every(x=>str(x,100)))throw Error('Invalid timezones');
+ const fk=['no','air','date','from','to','dep','arr','dt','at','term','seat','cabin','ref','baggage'];
+ if(!Array.isArray(t.flights)||t.flights.length>40||t.flights.some(f=>!f||!fk.every(k=>str(f[k],500))))throw Error('Invalid flights');
+ if(!Array.isArray(t.checks)||t.checks.length>30||t.checks.some(g=>!Array.isArray(g)||g.length!==2||!str(g[0],200)||!Array.isArray(g[1])||g[1].length>100||!g[1].every(x=>str(x,1000))))throw Error('Invalid checks');
+ const hk=['name','address','dates','room','services','schedule','guest','phone','booking','notice','agent','agentPhone','agentMobile','agentEmail'];
+ if(!t.hotel||!hk.every(k=>str(t.hotel[k],2000))||!['phone','agentPhone','agentMobile'].every(k=>/^\+?[0-9 -]{5,30}$/.test(t.hotel[k]))||!/^[^\s<>"@]+@[^\s<>"@]+\.[^\s<>"@]+$/.test(t.hotel.agentEmail))throw Error('Invalid hotel');
+ if(!t.sources||!['sheet','flight','hotel'].every(k=>{try{const u=new URL(t.sources[k]);return u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname)}catch{return false}}))throw Error('Invalid sources');
+ if(!Array.isArray(t.reminderNotes)||t.reminderNotes.length>30||!t.reminderNotes.every(x=>str(x)))throw Error('Invalid notes');
+ return {schema:1,timezones:[...t.timezones],timezoneNotice:t.timezoneNotice,...Object.fromEntries(['title','owner','period','route','readDate','sheetDate','ticketDate','hotelDate'].map(k=>[k,t[k]])),days:t.days.map(d=>[...d.slice(0,3),d[3].map(e=>[...e])]),flights:t.flights.map(f=>Object.fromEntries(fk.map(k=>[k,f[k]]))),checks:t.checks.map(g=>[g[0],[...g[1]]]),hotel:Object.fromEntries(hk.map(k=>[k,t.hotel[k]])),sources:Object.fromEntries(['sheet','flight','hotel'].map(k=>[k,t.sources[k]])),reminderNotes:[...t.reminderNotes]};
+}
+let trip=null;try{const t=JSON.parse(localStorage.getItem(TRIP_KEY)||'null');if(t)trip=validateTrip(t)}catch{}
+let SOURCES=trip?.sources||{},DAYS=trip?.days||[],FLIGHTS=trip?.flights||[],CHECKS=trip?.checks||[];
+function tripHeader(){document.getElementById('tripperiod').textContent=trip?trip.title+' · '+trip.period:'行程、班機、住宿，收在同一個地方';document.getElementById('tripowner').textContent=trip?trip.owner+' 的旅程':'私人資料留在裝置';document.getElementById('triproute').textContent=trip?trip.route:'準備好，再出發';}
+function emptyTrip(){main.innerHTML=`<h2>你的私人出差口袋</h2><section class="panel"><h3>先加入自己的行程</h3><p>這個公開 App 不附任何人的班機、訂位或住宿資料。匯入私人行程檔後，資料只留在你的這個瀏覽器。</p><div class="actions"><button class="btn primary" data-trip-import>匯入私人行程</button><button class="btn" data-tab="行李">先整理行李</button></div><input type="file" id="tripfile" accept="application/json,.json" hidden></section><section class="panel"><h3>iPhone 第一次使用</h3><ol><li>用 Safari 開啟此網址。</li><li>分享 → 加入主畫面。</li><li>從主畫面開啟 App，再匯入私人行程檔。</li><li>在「備忘」匯出備份；出發前用飛航模式測試。</li></ol><p class="muted">Safari 與主畫面 App 的資料可能分開；請固定從主畫面使用。私人 JSON 請存在你自己的「檔案」，不要上傳公開 GitHub。</p></section>`}
+document.addEventListener('click',e=>{if(e.target.closest('[data-trip-import]'))document.getElementById('tripfile').click()});
+document.addEventListener('change',async e=>{if(e.target.id!=='tripfile'||!e.target.files[0])return;try{const f=e.target.files[0];if(f.size>2000000)throw Error();const data=JSON.parse(await f.text());if(data.type!=='trip-pocket-private'||data.version!==1)throw Error();const next=validateTrip(data.trip);if(trip&&!await appConfirm('取代目前行程？你的備忘和清單仍會保留；建議先匯出備份。'))return;localStorage.setItem(TRIP_KEY,JSON.stringify(next));trip=next;SOURCES=trip.sources;DAYS=trip.days;FLIGHTS=trip.flights;CHECKS=trip.checks;day=0;tab='行程';render();toast('私人行程已匯入，只儲存在這個裝置')}catch{toast('無法匯入：檔案格式不符或裝置儲存空間不可用。原行程未變更。')}});
